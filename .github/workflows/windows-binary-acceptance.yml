@@ -15,9 +15,9 @@ jobs:
         run: |
           $candidate = Join-Path $env:RUNNER_TEMP 'AntShiftCandidate'
           New-Item -ItemType Directory -Force $candidate | Out-Null
-          gh release download v0.8.1-9 --repo Redfear187/AntShift-Updates --pattern AntShift-Windows-x64.zip --dir $candidate
-          if ($LASTEXITCODE -ne 0) { throw 'The draft release asset could not be downloaded.' }
           $archive = Join-Path $candidate 'AntShift-Windows-x64.zip'
+          curl.exe --fail --location --silent --show-error --retry 3 --retry-all-errors --header "Authorization: Bearer $env:GH_TOKEN" --header 'Accept: application/octet-stream' --header 'X-GitHub-Api-Version: 2022-11-28' --output $archive 'https://api.github.com/repos/Redfear187/AntShift-Updates/releases/assets/710564184'
+          if ($LASTEXITCODE -ne 0) { throw 'The draft release asset could not be downloaded.' }
           if (!(Test-Path $archive)) { throw 'The Windows update archive is missing.' }
           $digest = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($digest -ne 'bd6dfa4c5801de7cd25edcd062adf4bffd61500212031bf11317e3ee5afb7ee9') {
