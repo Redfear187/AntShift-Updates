@@ -1,0 +1,65 @@
+name: Windows binary acceptance
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - name: Download and verify AntShift 0.8.1 candidate
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $candidate = Join-Path $env:RUNNER_TEMP 'AntShiftCandidate'
+          New-Item -ItemType Directory -Force $candidate | Out-Null
+          gh release download v0.8.1-9 --repo Redfear187/AntShift-Updates --pattern AntShift-Windows-x64.zip --dir $candidate
+          if ($LASTEXITCODE -ne 0) { throw 'The draft release asset could not be downloaded.' }
+          $archive = Join-Path $candidate 'AntShift-Windows-x64.zip'
+          if (!(Test-Path $archive)) { throw 'The Windows update archive is missing.' }
+          $digest = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($digest -ne 'bd6dfa4c5801de7cd25edcd062adf4bffd61500212031bf11317e3ee5afb7ee9') {
+            throw "Unexpected Windows candidate digest: $digest"
+          }
+          Expand-Archive $archive -DestinationPath (Join-Path $candidate 'app')
+          if (!(Test-Path (Join-Path $candidate 'app/AntShift.exe'))) { throw 'AntShift.exe is missing from the archive.' }
+      - name: Run native Windows GUI and Explorer drag checks
+        shell: pwsh
+        env:
+          ANTSHIFT_SMOKE_DIRECTORY: ${{ runner.temp }}\\AntShiftCandidate\\smoke
+          ANTSHIFT_VERIFY_TOOLS_DIRECTORY: ${{ runner.temp }}\\AntShift-Test-Tools
+        run: |
+          New-Item -ItemType Directory -Force $env:ANTSHIFT_SMOKE_DIRECTORY | Out-Null
+          $executable = Join-Path $env:RUNNER_TEMP 'AntShiftCandidate/app/AntShift.exe'
+          $start = [Diagnostics.ProcessStartInfo]::new($executable)
+          $start.UseShellExecute = $false
+          $start.ArgumentList.Add('--smoke-test')
+          $process = [Diagnostics.Process]::Start($start)
+          try {
+            if (!$process.WaitForExit(900000)) {
+              $process.Kill($true)
+              throw 'The native Windows test exceeded 15 minutes.'
+            }
+            Write-Host "Native test exit code: $($process.ExitCode)"
+            if ($process.ExitCode -ne 0) {
+              foreach ($name in @('error.txt', 'global-gesture-error.txt', 'parity-progress.json')) {
+                $path = Join-Path $env:ANTSHIFT_SMOKE_DIRECTORY $name
+                if (Test-Path $path) { Get-Content $path | Write-Host }
+              }
+              throw 'The native Windows GUI or Explorer drag test failed.'
+            }
+            $report = Join-Path $env:ANTSHIFT_SMOKE_DIRECTORY 'smoke.json'
+            if (!(Test-Path $report)) { throw 'The native smoke report is missing.' }
+            Get-Content $report | Write-Host
+          } finally {
+            $process.Dispose()
+          }
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: windows-0.8.1-native-proof
+          path: ${{ runner.temp }}\\AntShiftCandidate\\smoke
+          retention-days: 7
+          if-no-files-found: warn
