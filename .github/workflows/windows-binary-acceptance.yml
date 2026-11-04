@@ -28,8 +28,8 @@ jobs:
       - name: Run native Windows GUI and Explorer drag checks
         shell: pwsh
         env:
-          ANTSHIFT_SMOKE_DIRECTORY: ${{ runner.temp }}\\AntShiftCandidate\\smoke
-          ANTSHIFT_VERIFY_TOOLS_DIRECTORY: ${{ runner.temp }}\\AntShift-Test-Tools
+          ANTSHIFT_SMOKE_DIRECTORY: ${{ runner.temp }}\AntShiftCandidate\smoke
+          ANTSHIFT_VERIFY_TOOLS_DIRECTORY: ${{ runner.temp }}\AntShift-Test-Tools
         run: |
           New-Item -ItemType Directory -Force $env:ANTSHIFT_SMOKE_DIRECTORY | Out-Null
           $executable = Join-Path $env:RUNNER_TEMP 'AntShiftCandidate/app/AntShift.exe'
@@ -60,6 +60,6 @@ jobs:
         if: always()
         with:
           name: windows-0.8.1-native-proof
-          path: ${{ runner.temp }}\\AntShiftCandidate\\smoke
+          path: ${{ runner.temp }}\AntShiftCandidate\smoke
           retention-days: 7
           if-no-files-found: warn
