@@ -11,7 +11,7 @@ AntShift is a desktop app for working with files on macOS and Windows. It is dev
 - **Audio and video:** Convert, trim, crop, change playback speed, extract audio, take video snapshots, join or split media and work with subtitles where available.
 - **ZIP and archives:** Bundle multiple selected files and folders into a ZIP archive; use supported archive formats for extraction and conversion.
 - **Web links:** Open supported media links in the download workflow. Available downloads and qualities depend on the source website.
-- **Library:** Find recent work, search by file or action, preview an item and reuse an action. Original files remain in place unless an action explicitly creates a new result.
+- **Library:** Find recent work, search by file or action, preview an item and reuse an action. Editing and conversion create output files; move actions change a file's location.
 - **Keyboard and language settings:** Configure drag shortcuts and select a supported interface language.
 
 Most file editing is performed locally on the computer. Web downloads connect to the chosen source, and some advanced conversions rely on additional tools.
